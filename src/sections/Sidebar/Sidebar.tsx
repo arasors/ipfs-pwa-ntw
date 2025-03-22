@@ -26,6 +26,13 @@ function Sidebar() {
       disableBackdropTransition={false}
       swipeAreaWidth={30}
       data-pw="sidebar"
+      elevation={0}
+      sx={{
+        backgroundColor: 'transparent',
+        boxShadow: 'none',
+        borderRight: '1px solid',
+        borderColor: 'divider',
+      }}
     >
       <List sx={{ width: 250, pt: (theme) => `${theme.mixins.toolbar.minHeight}px` }}>
         {routes

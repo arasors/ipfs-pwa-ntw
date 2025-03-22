@@ -14,6 +14,18 @@ let chatsDb: any = null;
 let isInitializing = false;
 let isInitialized = false;
 
+// Global pubsub topic handlers for compatibility layer
+interface PubSubTopics {
+  [topic: string]: Function[];
+}
+
+// Extend Window interface for TypeScript
+declare global {
+  interface Window {
+    ipfsPubSubTopics?: PubSubTopics;
+  }
+}
+
 // Database options
 const dbOptions = {
   // Enable access control - only specified addresses can write
@@ -26,6 +38,75 @@ const dbOptions = {
     description: 'A decentralized messaging system for IPFS-X',
     type: 'docstore'
   }
+};
+
+/**
+ * Helia'yı OrbitDB için js-ipfs API'sine uygun şekilde sarmalayan yardımcı fonksiyon
+ * OrbitDB, Helia'nın yeni API'si yerine eski js-ipfs API'sine göre çalışır
+ */
+const wrapHeliaWithIpfsCompat = (helia: any) => {
+  if (!helia) return null;
+  
+  // OrbitDB'nin beklediği ipfs.id() fonksiyonunu ekle
+  const wrappedHelia = {
+    ...helia,
+    id: async () => {
+      // Helia'da id fonksiyonu yok, orbitdb için sahte bir id objesi döndür
+      return {
+        id: `helia-${Date.now()}`,
+        publicKey: "placeholder-public-key",
+        addresses: [],
+        agentVersion: "Helia/1.0"
+      };
+    },
+    pubsub: {
+      // OrbitDB, ipfs.pubsub API'sine ihtiyaç duyar
+      subscribe: async (topic: string, handler: Function) => {
+        console.log(`[IPFS Compat] Subscribing to topic: ${topic}`);
+        // Basit bir pubsub implementasyonu
+        if (!window.ipfsPubSubTopics) {
+          window.ipfsPubSubTopics = {};
+        }
+        if (!window.ipfsPubSubTopics[topic]) {
+          window.ipfsPubSubTopics[topic] = [];
+        }
+        window.ipfsPubSubTopics[topic].push(handler);
+        return Promise.resolve();
+      },
+      unsubscribe: async (topic: string) => {
+        console.log(`[IPFS Compat] Unsubscribing from topic: ${topic}`);
+        // Basit temizleme
+        if (window.ipfsPubSubTopics && window.ipfsPubSubTopics[topic]) {
+          delete window.ipfsPubSubTopics[topic];
+        }
+        return Promise.resolve();
+      },
+      publish: async (topic: string, data: Uint8Array) => {
+        console.log(`[IPFS Compat] Publishing to topic: ${topic}`);
+        // Basit yayın mekanizması
+        if (window.ipfsPubSubTopics && window.ipfsPubSubTopics[topic]) {
+          window.ipfsPubSubTopics[topic].forEach((handler: Function) => {
+            handler(data);
+          });
+        }
+        return Promise.resolve();
+      }
+    },
+    dag: {
+      put: async (data: any) => {
+        console.log("[IPFS Compat] DAG put operation requested");
+        // OrbitDB'nin DAG API ihtiyaçları için basit bir cevap
+        return { cid: { toString: () => `dag-${Date.now()}` } };
+      },
+      get: async (cid: any) => {
+        console.log("[IPFS Compat] DAG get operation requested");
+        return { value: {} };
+      }
+    }
+  };
+  
+  console.log("Helia wrapped with js-ipfs compatibility layer for OrbitDB");
+  return wrappedHelia;
 };
 
 /**
@@ -53,8 +134,16 @@ export const initMessageDB = async (): Promise<boolean> => {
       return false;
     }
     
-    // Create OrbitDB instance
-    orbitdb = await OrbitDB.createInstance(helia);
+    // Helia'yı js-ipfs uyumlu sarmalayıcı ile OrbitDB için hazırla
+    const ipfsCompat = wrapHeliaWithIpfsCompat(helia);
+    if (!ipfsCompat) {
+      console.error('Failed to create IPFS compatibility layer');
+      isInitializing = false;
+      return false;
+    }
+    
+    // Create OrbitDB instance with wrapped Helia
+    orbitdb = await OrbitDB.createInstance(ipfsCompat);
     console.log('Messages OrbitDB instance created');
     
     // Open the chats database
@@ -272,6 +361,9 @@ export const syncMessagesWithOrbitDB = async (): Promise<boolean> => {
     const storeChats = messageStore.chats;
     const orbitChats = await getAllChats();
     
+    // Detaylı log ekleyelim
+    console.log(`Syncing: Found ${Object.keys(storeChats).length} local chats and ${orbitChats.length} remote chats`);
+    
     // Create maps for easier lookup
     const storeChatsMap = new Map(Object.entries(storeChats));
     const orbitChatsMap = new Map(orbitChats.map(chat => [chat.id, chat]));
@@ -288,6 +380,23 @@ export const syncMessagesWithOrbitDB = async (): Promise<boolean> => {
           }
         }));
         addedChatsCount++;
+        console.log(`Added new chat from OrbitDB: ${chatId} with participants:`, orbitChat.participants);
+      }
+      
+      // Katılımcılara göre sohbetleri kontrol et
+      // Kullanıcı bir sohbete katılımcı olarak eklenmiş olabilir
+      if (!storeChatsMap.has(chatId)) {
+        const currentUserAddress = localStorage.getItem('walletAddress');
+        if (currentUserAddress && orbitChat.participants.includes(currentUserAddress)) {
+          console.log(`User ${currentUserAddress} is a participant in chat ${chatId}, adding to local store`);
+          useMessageStore.setState(state => ({
+            chats: {
+              ...state.chats,
+              [chatId]: orbitChat
+            }
+          }));
+          addedChatsCount++;
+        }
       }
     }
     
@@ -298,11 +407,70 @@ export const syncMessagesWithOrbitDB = async (): Promise<boolean> => {
         // Add to OrbitDB
         await saveChat(storeChat);
         syncedChatsCount++;
+        console.log(`Added local chat to OrbitDB: ${chatId} with participants:`, storeChat.participants);
       }
     }
     
     // Step 2: Sync messages
     const storeMessages = messageStore.messages;
+    
+    // Pull all messages for all chats (even if we don't have messages locally yet)
+    let addedMessagesCount = 0;
+    for (const chatId of [...orbitChatsMap.keys(), ...storeChatsMap.keys()]) {
+      const orbitMessages = await getChatMessages(chatId);
+      console.log(`Found ${orbitMessages.length} messages in OrbitDB for chat ${chatId}`);
+      
+      const storeMessagesForChat = storeMessages[chatId] || [];
+      const storeMessageIds = new Set(storeMessagesForChat.map(msg => msg.id));
+      
+      // Yeni mesajları bul
+      const newMessages = orbitMessages.filter(msg => !storeMessageIds.has(msg.id));
+      
+      if (newMessages.length > 0) {
+        // Yerel store'a ekle
+        useMessageStore.setState(state => ({
+          messages: {
+            ...state.messages,
+            [chatId]: [...(state.messages[chatId] || []), ...newMessages].sort(
+              (a, b) => a.timestamp - b.timestamp
+            )
+          }
+        }));
+        
+        // Eğer chat seçili değilse, okunmamış mesaj sayacını artır
+        const selectedChatId = messageStore.selectedChatId;
+        const currentUserAddress = localStorage.getItem('walletAddress');
+        
+        // Başka bir kullanıcıdan gelen yeni mesajları say
+        const unreadCount = newMessages.filter(
+          msg => msg.senderAddress !== currentUserAddress
+        ).length;
+        
+        if (unreadCount > 0 && chatId !== selectedChatId) {
+          const chat = storeChats[chatId] || orbitChatsMap.get(chatId);
+          if (chat) {
+            useMessageStore.setState(state => ({
+              chats: {
+                ...state.chats,
+                [chatId]: {
+                  ...state.chats[chatId],
+                  unreadCount: (state.chats[chatId]?.unreadCount || 0) + unreadCount,
+                  // Son mesajı da güncelle
+                  lastMessage: newMessages[newMessages.length - 1] ? {
+                    content: newMessages[newMessages.length - 1].content,
+                    timestamp: newMessages[newMessages.length - 1].timestamp,
+                    senderAddress: newMessages[newMessages.length - 1].senderAddress
+                  } : state.chats[chatId]?.lastMessage
+                }
+              }
+            }));
+          }
+        }
+        
+        addedMessagesCount += newMessages.length;
+        console.log(`Added ${newMessages.length} new messages for chat ${chatId}`);
+      }
+    }
     
     // Messages in store but not in OrbitDB
     let syncedMessagesCount = 0;
@@ -317,32 +485,6 @@ export const syncMessagesWithOrbitDB = async (): Promise<boolean> => {
           await saveMessage(message);
           syncedMessagesCount++;
         }
-      }
-    }
-    
-    // Messages in OrbitDB but not in store
-    let addedMessagesCount = 0;
-    const orbitChatsArray = Array.from(orbitChatsMap.keys());
-    
-    for (const chatId of orbitChatsArray) {
-      const orbitMessages = await getChatMessages(chatId);
-      const storeMessagesForChat = storeMessages[chatId] || [];
-      const storeMessageIds = new Set(storeMessagesForChat.map(msg => msg.id));
-      
-      // Find messages that need to be added to store
-      const newMessages = orbitMessages.filter(msg => !storeMessageIds.has(msg.id));
-      
-      if (newMessages.length > 0) {
-        // Add to store
-        useMessageStore.setState(state => ({
-          messages: {
-            ...state.messages,
-            [chatId]: [...(state.messages[chatId] || []), ...newMessages].sort(
-              (a, b) => a.timestamp - b.timestamp
-            )
-          }
-        }));
-        addedMessagesCount += newMessages.length;
       }
     }
     

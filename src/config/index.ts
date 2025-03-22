@@ -1,4 +1,4 @@
-const title = 'React PWA';
+const title = 'IPFS PWA';
 
 const email = 'auther-email@gmail.com';
 
@@ -14,7 +14,7 @@ const loader = {
 
 const defaultMetaTags = {
   image: '/cover.png',
-  description: 'Starter kit for modern web applications',
+  description: 'IPFS PWA',
 };
 
 export { loader, dateFormat, repository, email, title, defaultMetaTags };

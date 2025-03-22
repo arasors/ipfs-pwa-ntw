@@ -5,7 +5,7 @@ import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 import { Chat, Message } from '@/models/Message';
 import { useNotificationStore } from './notificationStore';
-import { saveChat, saveMessage } from '@/lib/orbitdb-messages';
+import { saveChat, saveMessage } from '../utils/orbitdb-messages';
 
 export interface MessageState {
   chats: Record<string, Chat>;

@@ -30,5 +30,6 @@ function App() {
   );
 }
 
-const AppWithErrorHandler = withErrorHandler(App, AppErrorBoundaryFallback);
-export default AppWithErrorHandler;
+export default App;
+//const AppWithErrorHandler = withErrorHandler(App, AppErrorBoundaryFallback);
+//export default AppWithErrorHandler;

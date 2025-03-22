@@ -20,18 +20,22 @@ function Header() {
   const notifications = useNotifications();
 
   function showNotification() {
-    notifications.show(getRandomJoke(), {
-      autoHideDuration: 5000,
-    });
+    
   }
 
   return (
     <AppBar
       position="static"
       color="transparent"
-      elevation={2}
+      elevation={0}
       data-pw={`theme-${themeMode}`}
       enableColorOnDark
+      sx={{
+        backgroundColor: 'transparent',
+        boxShadow: 'none',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+      }}
     >
       <Toolbar>
         <Stack direction="row" justifyContent="space-between" alignItems="center" flex={1}>
