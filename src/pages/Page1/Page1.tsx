@@ -78,10 +78,10 @@ export default function FeedPage() {
   }, [postsCount, isInitialized, updateTrendingHashtags]);
 
   const tabs = [
-    { id: 'following', label: 'Following', hidden: !currentUserAddress },
-    { id: 'trending', label: 'Trending' },
-    { id: 'recent', label: 'New' },
-    { id: 'hashtags', label: 'Following Hashtags', hidden: !currentUserAddress }
+    { id: 'following', label: 'Last', hidden: !currentUserAddress },
+    //{ id: 'trending', label: 'Trending' },
+    //{ id: 'recent', label: 'New' },
+    //{ id: 'hashtags', label: 'Following Hashtags', hidden: !currentUserAddress }
   ];
 
   return (
