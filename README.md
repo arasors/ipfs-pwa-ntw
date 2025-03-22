@@ -39,7 +39,6 @@ Building a modern web application requires a robust setup, including routing, UI
 - **Testing**: Vitest for unit tests, Playwright for e2e tests
 - **CI/CD**: GitHub Actions workflows for quality checks and testing
 - **Code Quality**: ESLint, Prettier, TypeScript integration
-- **Git Hooks**: Husky with lint-staged for pre-commit quality enforcement
 - **Local HTTPS**: Built-in support for local HTTPS development
 
 ## 🚀 Getting Started
