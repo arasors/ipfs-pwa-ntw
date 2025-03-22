@@ -21,7 +21,7 @@ Building a modern web application requires a robust setup, including routing, UI
 | Technology | Version | Description |
 |------------|---------|-------------|
 | [Vite](https://vitejs.dev/) | v6 | Fast build tool based on ES modules, Rollup, and esbuild |
-| [React](https://react.dev/) | v19 | Latest version with all modern features |
+| [React](https://react.dev/) | v18 | Latest version with all modern features |
 | [TypeScript](https://www.typescriptlang.org/) | Latest | Type-safe JavaScript for better development |
 | [MUI](https://mui.com/) | v6 | Comprehensive UI framework with MUI |
 
@@ -48,7 +48,7 @@ Building a modern web application requires a robust setup, including routing, UI
 
 ```bash
 # Clone the repository
-git clone https://github.com/suren-atoyan/react-pwa.git
+git clone https://github.com/arasors/ipfs-pwa-ntw.git
 
 # Install dependencies
 npm install
