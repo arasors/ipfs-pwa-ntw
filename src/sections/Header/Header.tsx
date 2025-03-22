@@ -50,22 +50,6 @@ function Header() {
             </Button>
           </Stack>
           <Stack direction="row" alignItems="center">
-            <Tooltip title="Hot keys" arrow>
-              <HotKeysButton
-                size="small"
-                variant="outlined"
-                aria-label="open hotkeys dialog"
-                onClick={openHotKeysDialog}
-              >
-                alt + k
-              </HotKeysButton>
-            </Tooltip>
-            <Divider orientation="vertical" flexItem />
-            <Tooltip title="It's open source" arrow>
-              <IconButton color="info" size="large" component="a" href={repository} target="_blank">
-                <GitHubIcon />
-              </IconButton>
-            </Tooltip>
             <Divider orientation="vertical" flexItem />
             <Tooltip title="Switch theme" arrow>
               <IconButton

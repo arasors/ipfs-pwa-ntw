@@ -11,29 +11,11 @@ import resetApp from '@/utils/reset-app';
 
 function AppErrorBoundaryFallback() {
   return (
-    <Box height={400}>
-      <FullSizeCentered>
-        <Paper sx={{ p: 5 }}>
-          <Typography variant="h5" component="h3">
-            Sorry, I guess, something went wrong. You can:
-          </Typography>
-          <Button
-            startIcon={<EmailIcon />}
-            variant="outlined"
-            target="_blank"
-            rel="noreferrer"
-            href={`mailto: ${email}`}
-            sx={{ my: 3 }}
-          >
-            contact with author by this email - {email}
-          </Button>
-          <Typography component="h6">or</Typography>
-          <Button startIcon={<RestartIcon />} sx={{ mt: 3 }} variant="outlined" onClick={resetApp}>
-            Press here to reset the application
-          </Button>
-        </Paper>
-      </FullSizeCentered>
-    </Box>
+    <Paper sx={{ p: 5, flex: 1, height: '87vh', margin: 'auto' }}>
+        <FullSizeCentered>
+          <Typography variant="h6" sx={{fontWeight: 'normal', fontSize: '1rem'}}>Some Error Occured</Typography>
+        </FullSizeCentered>
+      </Paper>
   );
 }
 

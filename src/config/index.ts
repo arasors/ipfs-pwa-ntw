@@ -2,7 +2,7 @@ const title = 'React PWA';
 
 const email = 'auther-email@gmail.com';
 
-const repository = 'https://github.com/suren-atoyan/react-pwa';
+const repository = 'https://github.com/arasors/ipfs-pwa-ntw';
 
 const dateFormat = 'MMMM DD, YYYY';
 

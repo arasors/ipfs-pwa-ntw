@@ -38,21 +38,13 @@ const CONFIG: IpfsConfig = {
   concurrentUploads: 3,
   gateways: [
     'https://gateway.pinata.cloud/ipfs/',
+    'https://ipfs.io/ipfs/',
     process.env.NEXT_PUBLIC_PINATA_GATEWAY || ''
   ],
   pinning: {
     enabled: true,
     services: [
-      {
-        name: 'Pinata',
-        url: 'https://api.pinata.cloud/pinning/pinByHash',
-        headers: {
-          'Content-Type': 'application/json',
-          'pinata_api_key': process.env.NEXT_PUBLIC_PINATA_API_KEY || '',
-          'pinata_secret_api_key': process.env.NEXT_PUBLIC_PINATA_SECRET_API_KEY || '',
-          'pinata_jwt': process.env.NEXT_PUBLIC_PINATA_JWT || ''
-        }
-      }
+      
       // Web3.Storage pinning API has been deprecated as of January 9, 2024
       // To use their service, an upgrade to their new w3up API would be required
       // See: https://blog.web3.storage/posts/the-data-layer-is-here-with-the-new-web3-storage

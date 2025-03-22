@@ -9,6 +9,17 @@ export interface MediaItem {
   type: 'image' | 'video' | 'document';
 }
 
+export interface MediaFile {
+  file: File;
+  preview: string;
+  type: 'image' | 'video' | 'document';
+  uploaded: boolean;
+  cid?: string;
+}
+
+// IPFS process status
+export type ProcessStatus = 'idle' | 'uploading' | 'success' | 'error';
+
 export interface Post {
   id: string;
   content: string;
