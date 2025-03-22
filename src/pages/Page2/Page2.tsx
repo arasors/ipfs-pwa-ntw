@@ -323,7 +323,7 @@ function Page2() {
                           whiteSpace: 'nowrap'
                         }}
                       >
-                        {chat.lastMessage?.content || 'Yeni sohbet'}
+                        {chat.lastMessage?.content || 'New chat'}
                       </Typography>
                       {chat.lastMessage?.timestamp && (
                         <Typography variant="caption" component="span">
@@ -370,9 +370,10 @@ function Page2() {
         margin: '0 auto', 
         height: 'calc(100vh - 100px)', 
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        paddingTop: 3
       }}>
-        <Typography variant="h4" gutterBottom>Sohbet</Typography>
+        <Typography variant="h4" gutterBottom>Chat</Typography>
         
         <Box sx={{ 
           display: 'flex', 
